@@ -12,6 +12,7 @@ class MyButton(tk.Button):
         self.y = y
         self.number = number
         self.is_mine = False
+        self.count_bomb = 0
 
     def __repr__(self):
         return f'My Button ({self.x}:{self.y}) #{self.number} {self.is_mine}'
@@ -48,8 +49,8 @@ class MineSweeper:
         clicked_button.config(state='disabled')
 
     def create_widgets(self):
-        for i in range(MineSweeper.ROW + 2):
-            for j in range(MineSweeper.COLUMNS + 2):
+        for i in range(1, MineSweeper.ROW + 1):
+            for j in range(1, MineSweeper.COLUMNS + 1):
                 btn = self.buttons[i][j]
                 btn.grid(row=i, column=j)
 
@@ -60,11 +61,12 @@ class MineSweeper:
                 if btn.is_mine:
                     btn.config(text='*', background='red', disabledforeground='black')
                 else:
-                    btn.config(text=btn.number, disabledforeground='black')
+                    btn.config(text=btn.count_bomb, disabledforeground='black')
 
     def start(self):
         self.create_widgets()
         self.insert_mines()
+        self.count_mines_in_cells()
         self.print_buttons()
         self.open_all_buttons()
         MineSweeper.root.mainloop()
@@ -86,6 +88,22 @@ class MineSweeper:
                 if btn.number in index_mines:
                     btn.is_mine = True
                 count += 1
+
+    def count_mines_in_cells(self):
+        for i in range(1, MineSweeper.ROW + 1):
+            for j in range(1, MineSweeper.COLUMNS + 1):
+                btn = self.buttons[i][j]
+                count_bomb = 0
+                if not btn.is_mine:
+                    # находим соседей
+                    for row_dx in [-1, 0, 1]:
+                        for col_dx in [-1, 0, 1]:
+                            # получаем всех возможных соседей тек. кнопки
+                            neighbour = self.buttons[i + row_dx][j + col_dx]
+                            # если сосед мина, увеличиваем счетчик
+                            if neighbour.is_mine:
+                                count_bomb += 1
+                btn.count_bomb = count_bomb
 
     @staticmethod
     def get_mines_places():
