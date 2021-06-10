@@ -2,6 +2,17 @@ import tkinter as tk
 # shuffle позволяет перемещивать коллекцию
 from random import shuffle
 
+colors = {
+    1: 'blue',
+    2: 'green',
+    3: '#e6951c',
+    4: '#ff4d6a',
+    5: '#ff0000',
+    6: '#ff0000',
+    7: '#ff0000',
+    8: '#ff0000'
+}
+
 
 # Переобределяем стандартный вывод кнопки
 class MyButton(tk.Button):
@@ -60,8 +71,15 @@ class MineSweeper:
                 btn = self.buttons[i][j]
                 if btn.is_mine:
                     btn.config(text='*', background='red', disabledforeground='black')
-                else:
-                    btn.config(text=btn.count_bomb, disabledforeground='black')
+                # elif btn.count_bomb == 1:
+                #     btn.config(text=btn.count_bomb, foreground='blue')
+                # elif btn.count_bomb == 2:
+                #     btn.config(text=btn.count_bomb, fg='green')
+                #
+                # по умолчанию проверяется среди ключей словаря
+                elif btn.count_bomb in colors:
+                    color = colors.get(btn.count_bomb, 'black')
+                    btn.config(text=btn.count_bomb, fg=color)
 
     def start(self):
         self.create_widgets()
@@ -72,8 +90,15 @@ class MineSweeper:
         MineSweeper.root.mainloop()
 
     def print_buttons(self):
-        for row_btn in self.buttons:
-            print(row_btn)
+        # проходимся по всем кнопкам, которые не являются барьерными
+        for i in range(1, MineSweeper.ROW + 1):
+            for j in range(1, MineSweeper.COLUMNS + 1):
+                btn = self.buttons[i][j]
+                if btn.is_mine:
+                    print('B', end='')
+                else:
+                    print(btn.count_bomb, end='')
+            print()  # перенос для нового ряда
 
     def insert_mines(self):
         index_mines = self.get_mines_places()
