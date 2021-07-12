@@ -4,13 +4,13 @@ from random import shuffle
 
 colors = {
     1: 'blue',
-    2: 'green',
-    3: '#e6951c',
-    4: '#ff4d6a',
-    5: '#ff0000',
-    6: '#ff0000',
-    7: '#ff0000',
-    8: '#ff0000'
+    2: '#008200',
+    3: '#FF0000',
+    4: '#000084',
+    5: '#840000',
+    6: '#008284',
+    7: '#840084',
+    8: '#000000'
 }
 
 
@@ -56,8 +56,14 @@ class MineSweeper:
         if clicked_button.is_mine:
             clicked_button.config(text='*', background='red', disabledforeground='black')
         else:
-            clicked_button.config(text=clicked_button.number, disabledforeground='black')
+            color = colors.get(clicked_button.count_bomb, 'black')
+            if clicked_button.count_bomb:
+                clicked_button.config(text=clicked_button.count_bomb, disabledforeground=color)
+            else:
+                clicked_button.config(text='', disabledforeground=color)
+
         clicked_button.config(state='disabled')
+        clicked_button.config(relief=tk.SUNKEN)  # эффект нажатия кнопки
 
     def create_widgets(self):
         for i in range(1, MineSweeper.ROW + 1):
@@ -86,7 +92,7 @@ class MineSweeper:
         self.insert_mines()
         self.count_mines_in_cells()
         self.print_buttons()
-        self.open_all_buttons()
+        # self.open_all_buttons()
         MineSweeper.root.mainloop()
 
     def print_buttons(self):
