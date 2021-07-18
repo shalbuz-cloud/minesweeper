@@ -1,6 +1,7 @@
-import tkinter as tk
-# shuffle позволяет перемещивать коллекцию
 from random import shuffle
+# shuffle позволяет перемещивать коллекцию
+import tkinter as tk
+from tkinter.messagebox import showinfo
 
 colors = {
     1: 'blue',
@@ -35,6 +36,8 @@ class MineSweeper:
     ROW = 10
     COLUMNS = 7
     MINES = 15
+    IS_GAME_OVER = False
+    IS_FIRST_CLICK = True
 
     # Инициализация игры. В этот момент создаются все данные, которые
     # в дальнейшем будут обрабатываться.
@@ -53,9 +56,22 @@ class MineSweeper:
             self.buttons.append(temp)
 
     def click(self, clicked_button: MyButton):
+        if MineSweeper.IS_FIRST_CLICK:
+            self.insert_mines(clicked_button.number)
+            self.count_mines_in_cells()
+            self.print_buttons()
+
         if clicked_button.is_mine:
             clicked_button.config(text='*', background='red', disabledforeground='black')
             clicked_button.is_open = True
+            MineSweeper.IS_GAME_OVER = True
+            showinfo("Game over", "Вы проиграли!")
+            # позываем все бомбы на поле
+            for i in range(1, MineSweeper.ROW + 1):
+                for j in range(1, MineSweeper.COLUMNS + 1):
+                    btn = self.buttons[i][j]
+                    if btn.is_mine:
+                        btn['text'] = "*"
         else:
             color = colors.get(clicked_button.count_bomb, 'black')
             if clicked_button.count_bomb:
@@ -94,8 +110,8 @@ class MineSweeper:
                     for dy in [-1, 0, 1]:  # соседи по оси y
                         # оставляем только соседей сверху, справа, слева
                         # и снизу
-                        if not abs(dx - dy) == 1:
-                            continue
+                        # if not abs(dx - dy) == 1:
+                        #     continue
 
                         # координаты след. кнопки
                         next_btn = self.buttons[x + dx][y + dy]
@@ -108,10 +124,13 @@ class MineSweeper:
                             queue.append(next_btn)
 
     def create_widgets(self):
+        count = 1
         for i in range(1, MineSweeper.ROW + 1):
             for j in range(1, MineSweeper.COLUMNS + 1):
                 btn = self.buttons[i][j]
+                btn.number = count
                 btn.grid(row=i, column=j)
+                count += 1
 
     def open_all_buttons(self):
         for i in range(MineSweeper.ROW + 2):
@@ -131,9 +150,9 @@ class MineSweeper:
 
     def start(self):
         self.create_widgets()
-        self.insert_mines()
-        self.count_mines_in_cells()
-        self.print_buttons()
+        # self.insert_mines()
+        # self.count_mines_in_cells()
+        # self.print_buttons()
         # self.open_all_buttons()
         MineSweeper.root.mainloop()
 
@@ -148,19 +167,16 @@ class MineSweeper:
                     print(btn.count_bomb, end='')
             print()  # перенос для нового ряда
 
-    def insert_mines(self):
-        index_mines = self.get_mines_places()
+    def insert_mines(self, number: int):
+        index_mines = self.get_mines_places(number)
         print(index_mines)
-        count = 1
         # не берем 1 и последниие колонки и 1 и последние ряды
         for i in range(1, MineSweeper.ROW + 1):
             # для каждого ряда проходим кнопки
             for j in range(1, MineSweeper.COLUMNS + 1):
                 btn = self.buttons[i][j]  # находим кнопку по индексу
-                btn.number = count
                 if btn.number in index_mines:
                     btn.is_mine = True
-                count += 1
 
     def count_mines_in_cells(self):
         for i in range(1, MineSweeper.ROW + 1):
@@ -179,8 +195,10 @@ class MineSweeper:
                 btn.count_bomb = count_bomb
 
     @staticmethod
-    def get_mines_places():
+    def get_mines_places(exclude_number: int):
         indexes = list(range(1, MineSweeper.COLUMNS * MineSweeper.ROW + 1))
+        print(f"Исключаем кнопку номер {exclude_number}")
+        indexes.remove(exclude_number)
         shuffle(indexes)  # Перемещиваем список кнопок
         return indexes[:MineSweeper.MINES]
 
