@@ -1,7 +1,7 @@
 from random import shuffle
 # shuffle позволяет перемещивать коллекцию
 import tkinter as tk
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, showerror
 
 colors = {
     1: 'blue',
@@ -56,10 +56,16 @@ class MineSweeper:
             self.buttons.append(temp)
 
     def click(self, clicked_button: MyButton):
+
+        # заморозка поля при проигрыше
+        if MineSweeper.IS_GAME_OVER:
+            return
+
         if MineSweeper.IS_FIRST_CLICK:
             self.insert_mines(clicked_button.number)
             self.count_mines_in_cells()
             self.print_buttons()
+            MineSweeper.IS_FIRST_CLICK = False
 
         if clicked_button.is_mine:
             clicked_button.config(text='*', background='red', disabledforeground='black')
@@ -123,14 +129,81 @@ class MineSweeper:
                                 1 <= next_btn.y <= MineSweeper.COLUMNS and next_btn not in queue:
                             queue.append(next_btn)
 
+    def reload(self):  # FIXME баг при проигрыше и старте новый игры
+        # уничтожаем все элементы
+        [child.destroy() for child in self.root.winfo_children()]
+        self.__init__()
+        self.create_widgets()
+        MineSweeper.IS_GAME_OVER = False
+        MineSweeper.IS_FIRST_CLICK = True
+
+    def create_settings_win(self):
+        win_settings = tk.Toplevel(self.root)
+        win_settings.wm_title('Настройки')
+        # строки
+        tk.Label(win_settings, text='Количество строк').grid(row=0, column=0)
+        row_entry = tk.Entry(win_settings)
+        row_entry.insert(0, MineSweeper.ROW)
+        row_entry.grid(row=0, column=1, padx=20, pady=20)
+        # колонки
+        tk.Label(win_settings, text='Количество колонок').grid(row=1, column=0)
+        column_entry = tk.Entry(win_settings)
+        column_entry.insert(0, MineSweeper.COLUMNS)
+        column_entry.grid(row=1, column=1, padx=20, pady=20)
+        # мины
+        tk.Label(win_settings, text='Количество мин').grid(row=2, column=0)
+        mines_entry = tk.Entry(win_settings)
+        mines_entry.insert(0, MineSweeper.MINES)
+        mines_entry.grid(row=2, column=1, padx=20, pady=20)
+        # ok
+        tk.Button(
+            win_settings, text='Применить',
+            command=lambda: self.change_settings(row_entry, column_entry, mines_entry)
+        ).grid(row=3, column=0, columnspan=2, padx=20, pady=20)
+
+    def change_settings(self, row: tk.Entry, column: tk.Entry, mines: tk.Entry):
+        try:
+            int(row.get()), int(column.get()), int(mines.get())
+        except ValueError:
+            showerror('Ошибка', 'Вы ввели неправильное значение!')
+            return
+
+        MineSweeper.ROW = int(row.get())
+        MineSweeper.COLUMNS = int(column.get())
+        MineSweeper.MINES = int(mines.get())
+        self.reload()
+
     def create_widgets(self):
+        # Создаем меню
+        menu_bar = tk.Menu(self.root)
+        # Выводим меню
+        self.root.config(menu=menu_bar)
+
+        # Подменю
+        # tearoff - убирает полоску в меню
+        settings_menu = tk.Menu(menu_bar, tearoff=0)
+        settings_menu.add_command(label='Играть', command=self.reload)
+        settings_menu.add_command(label='Настройки', command=self.create_settings_win)
+        settings_menu.add_command(label='Выход', command=self.root.destroy)
+        menu_bar.add_cascade(label='Файл', menu=settings_menu)
+
         count = 1
         for i in range(1, MineSweeper.ROW + 1):
             for j in range(1, MineSweeper.COLUMNS + 1):
                 btn = self.buttons[i][j]
                 btn.number = count
-                btn.grid(row=i, column=j)
+                btn.grid(row=i, column=j, stick='NWES')
                 count += 1
+
+        # Размер строк.
+        for i in range(1, MineSweeper.ROW + 1):
+            # 1. окно; 2. строка; 3. вес
+            tk.Grid.rowconfigure(self.root, i, weight=1)
+
+        # Размер колонок
+        for i in range(1, MineSweeper.COLUMNS + 1):
+            # 1. окно; 2. колонка; 3. вес
+            tk.Grid.columnconfigure(self.root, i, weight=1)
 
     def open_all_buttons(self):
         for i in range(MineSweeper.ROW + 2):
