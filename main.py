@@ -51,9 +51,24 @@ class MineSweeper:
                 btn = MyButton(MineSweeper.root, x=i, y=j)
                 # после создания кнопки опредяляем действие
                 btn.config(command=lambda button=btn: self.click(button))
+                btn.bind("<Button-3>", self.right_click)
                 # btn.grid(row=i, column=j)  # => create_widgets
                 temp.append(btn)
             self.buttons.append(temp)
+
+    @staticmethod
+    def right_click(event):
+        if MineSweeper.IS_GAME_OVER:
+            return
+
+        cur_btn = event.widget
+        if cur_btn['state'] == 'normal':
+            cur_btn['state'] = 'disabled'
+            cur_btn['text'] = '🚩'
+            cur_btn['disabledforeground'] = 'red'
+        elif cur_btn['text'] == '🚩':
+            cur_btn['text'] = ''
+            cur_btn['state'] = 'normal'
 
     def click(self, clicked_button: MyButton):
 
